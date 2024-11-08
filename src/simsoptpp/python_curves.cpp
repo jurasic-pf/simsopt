@@ -15,6 +15,9 @@ typedef CurveXYZFourier<PyArray> PyCurveXYZFourier;
 typedef CurveRZFourier<PyArray> PyCurveRZFourier; 
 #include "curveplanarfourier.h"
 typedef CurvePlanarFourier<PyArray> PyCurvePlanarFourier;
+#include "curvealongz.h"
+typedef CurveAlongZ<PyArray> PyCurveAlongZ;
+
 
 template <class PyCurveXYZFourierBase = PyCurveXYZFourier> class PyCurveXYZFourierTrampoline : public PyCurveTrampoline<PyCurveXYZFourierBase> {
     public:
@@ -78,6 +81,28 @@ template <class PyCurvePlanarFourierBase = PyCurvePlanarFourier> class PyCurvePl
             PyCurvePlanarFourierBase::gamma_impl(data, quadpoints);
         }
 };
+
+template <class PyCurveAlongZBase = PyCurveAlongZ> class PyCurveAlongZTrampoline : public PyCurveTrampoline<PyCurveAlongZBase> {
+    public:
+        using PyCurveTrampoline<PyCurveAlongZBase>::PyCurveTrampoline; // Inherit constructors
+
+        int num_dofs() override {
+            return PyCurveAlongZBase::num_dofs();
+        }
+
+        void set_dofs_impl(const vector<double>& _dofs) override {
+            PyCurveAlongZBase::set_dofs_impl(_dofs);
+        }
+
+        vector<double> get_dofs() override {
+            return PyCurveAlongZBase::get_dofs();
+        }
+
+        void gamma_impl(PyArray& data, PyArray& quadpoints) override {
+            PyCurveAlongZBase::gamma_impl(data, quadpoints);
+        }
+};
+
 template <typename T, typename S> void register_common_curve_methods(S &c) {
     c.def("gamma", &T::gamma)
      .def("gamma_impl", &T::gamma_impl)
@@ -144,4 +169,10 @@ void init_curves(py::module_ &m) {
         .def_readonly("stellsym", &PyCurvePlanarFourier::stellsym)
         .def_readonly("nfp", &PyCurvePlanarFourier::nfp);
     register_common_curve_methods<PyCurvePlanarFourier>(pycurveplanarfourier);
+    
+    auto pycurvealongz = py::class_<PyCurveAlongZ, shared_ptr<PyCurveAlongZ>, PyCurveAlongZTrampoline<PyCurveAlongZ>, PyCurve>(m, "CurveAlongZ")
+        .def(py::init<int>())
+        .def(py::init<std::vector<double>>())
+        .def(py::init<PyArray>());
+    register_common_curve_methods<PyCurveAlongZ>(pycurvealongz);
 }
